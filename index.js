@@ -30,23 +30,28 @@ async function connectToMongoDB() {
     await client.connect();
     const database = client.db("Services");
     const ServiceCallaction = database.collection("All_Service");
+    app.get('/services',async(req,res)=>{
+        const course= ServiceCallaction.find()
+        const result =await course.toArray()
+        res.send(result)
+    })
     app.post('/servics',async(req,res)=>{
         const serviceData=req.body
-        console.log(serviceData)
-        const createUser={
-            $set:{
-                serviceName: serviceData.serviceName,
-  emailAddress: serviceData.emailAddress,
-  serviceArea: serviceData.serviceArea,
-  Price: serviceData.Price,
-  imgURL: serviceData.imgURL,
-  description: serviceData.description,
-  providerEmail: serviceData.providerEmail,
-  providerImage:serviceData.providerImage,
-  providerName: serviceData.providerName
-            }
-        }
-        const result =await ServiceCallaction.insertOne(createUser)
+      
+//         const createUser={
+//             $set:{
+//                 serviceName: serviceData.serviceName,
+//   emailAddress: serviceData.emailAddress,
+//   serviceArea: serviceData.serviceArea,
+//   Price: serviceData.Price,
+//   imgURL: serviceData.imgURL,
+//   description: serviceData.description,
+//   providerEmail: serviceData.providerEmail,
+//   providerImage:serviceData.providerImage,
+//   providerName: serviceData.providerName
+//             }
+//         }
+        const result =await ServiceCallaction.insertOne(serviceData)
         res.send(result)
     })
 
