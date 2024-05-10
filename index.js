@@ -85,20 +85,29 @@ async function connectToMongoDB() {
     app.post('/servics',async(req,res)=>{
         const serviceData=req.body
       
-//         const createUser={
-//             $set:{
-//                 serviceName: serviceData.serviceName,
-//   emailAddress: serviceData.emailAddress,
-//   serviceArea: serviceData.serviceArea,
-//   Price: serviceData.Price,
-//   imgURL: serviceData.imgURL,
-//   description: serviceData.description,
-//   providerEmail: serviceData.providerEmail,
-//   providerImage:serviceData.providerImage,
-//   providerName: serviceData.providerName
-//             }
-//         }
+
         const result =await ServiceCallaction.insertOne(serviceData)
+        res.send(result)
+    })
+    app.put('/update/:id',async(req,res)=>{
+
+
+      const id=req.params.id
+        const serviceData=req.body
+        const quary={_id: new ObjectId(id)}
+      
+        const createUser={
+            $set:{
+                serviceName: serviceData.serviceName,
+  emailAddress: serviceData.emailAddress,
+  serviceArea: serviceData.serviceArea,
+  Price: serviceData.Price,
+  imgURL: serviceData.imgURL,
+  description: serviceData.description,
+  
+            }
+        }
+        const result =await ServiceCallaction.updateOne(quary,createUser)
         res.send(result)
     })
 
