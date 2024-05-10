@@ -31,6 +31,22 @@ async function connectToMongoDB() {
     const database = client.db("Services");
     const ServiceCallaction = database.collection("All_Service");
     const BookingCallaction = database.collection("Booking");
+    app.delete('/booking/:id',async(req,res)=>{
+      const id=req.params.id
+      const quary={_id: new ObjectId(id)}
+      const result =await BookingCallaction.deleteOne(quary)
+      res.send(result)
+    })
+
+    app.get('/booking',async(req,res)=>{
+      const userEmail=req.query.email 
+      const quary={providerEmail:userEmail}
+    
+      const result= await BookingCallaction.find(quary).toArray()
+      
+      res.send(result)
+      
+    })
 
     app.post('/booking',async(req,res)=>{
       const bokingData=req.body
