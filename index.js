@@ -42,10 +42,18 @@ async function connectToMongoDB() {
       const userEmail=req.query.email 
       const quary={providerEmail:userEmail}
     
-      const result= await BookingCallaction.find(quary).toArray()
+      const result= await ServiceCallaction.find(quary).toArray()
       
       res.send(result)
       
+    })
+    app.get('/booking/:id',async(req,res)=>{
+      const id =req.params.id 
+      const quary={serviceId:id}
+      
+      const result =await BookingCallaction.findOne(quary)
+      console.log(result)
+      res.send(result)
     })
 
     app.post('/booking',async(req,res)=>{
