@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const port = process.env.PORT || 5000;
 const app = express();
@@ -30,6 +30,19 @@ async function connectToMongoDB() {
     await client.connect();
     const database = client.db("Services");
     const ServiceCallaction = database.collection("All_Service");
+    const BookingCallaction = database.collection("Booking");
+
+    app.post('/booking',async(req,res)=>{
+      const bokingData=req.body
+      const result=await BookingCallaction.insertOne(bokingData)
+      res.send(result)
+    })
+    app.get('/services/:id',async(req,res)=>{
+        const id =req.params.id
+       const quary ={_id: new ObjectId(id)}
+       const result=await ServiceCallaction.findOne(quary)
+       res.send(result)
+    })
     app.get('/services',async(req,res)=>{
         const course= ServiceCallaction.find()
         const result =await course.toArray()
