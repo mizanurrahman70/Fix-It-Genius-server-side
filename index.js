@@ -27,14 +27,15 @@ const client = new MongoClient(uri, {
 
 async function connectToMongoDB() {
   try {
-    await client.connect();
+    // await client.connect();
     const database = client.db("Services");
     const ServiceCallaction = database.collection("All_Service");
     const BookingCallaction = database.collection("Booking");
     app.delete('/booking/:id',async(req,res)=>{
       const id=req.params.id
       const quary={_id: new ObjectId(id)}
-      const result =await BookingCallaction.deleteOne(quary)
+      const result =await ServiceCallaction.deleteOne(quary)
+      
       res.send(result)
     })
 
@@ -82,6 +83,15 @@ async function connectToMongoDB() {
         const result =await course.toArray()
         res.send(result)
     })
+    // search data 
+    app.get('/searching',async(req,res)=>{
+      const {search}=req.query
+     
+      const filtering= new RegExp(search,'i')
+      const serviceFiltering=await ServiceCallaction.find({serviceName:filtering}).toArray()
+    
+      res.send(serviceFiltering)
+  })
     app.post('/servics',async(req,res)=>{
         const serviceData=req.body
       
