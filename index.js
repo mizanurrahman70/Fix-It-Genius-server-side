@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const cookieParser=require('cookie-parser')
+const jwt=require ('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const port = process.env.PORT || 5000;
@@ -16,7 +18,21 @@ app.use(
     credentials: true,
   })
 );
-
+// midleware create 
+   const verifayToken=(req,res,next)=>{
+    const token=req?.cookie?.token 
+    if(!token){
+      return res.status(401).send({message:'unathorise'})
+    }
+    jwt.verify(token.process.env.TOKEN_KEY,(error,decoded)=>{
+      if(error){
+        return res.status(401).send({message:'can not accecss'})
+      }
+      req.user=decoded
+      next()
+    }
+    )
+   }
 const uri = `mongodb+srv://${process.env.MB_USER}:${process.env.MB_PASS}@moto-race.y7jbbdm.mongodb.net/?retryWrites=true&w=majority&appName=Moto-Race`;
 
 const client = new MongoClient(uri, {
@@ -33,6 +49,25 @@ async function connectToMongoDB() {
     const database = client.db("Services");
     const ServiceCallaction = database.collection("All_Service");
     const BookingCallaction = database.collection("Booking");
+    // auth verification 
+    app.post('/jwt',async(req,res)=>{
+      const user=req.body
+      const token=jwt.sign(user,process.env.TOKEN_KEY,{expiresIn:'24h'})
+      res
+      .cookie('token',token,{
+        httpOnly:true,
+        secure:true,
+        sameSite:'none'
+      })
+      .send({success:true})
+    })
+    app.post('/tokenout',async (req,res)=>{
+      const user=req.body
+      res
+      .clearCookie('token',{maxAge:0})
+      .send({success:true})
+    })
+
     app.delete("/booking/:id", async (req, res) => {
       const id = req.params.id;
       const quary = { _id: new ObjectId(id) };
@@ -51,7 +86,7 @@ async function connectToMongoDB() {
     });
     app.get("/booked", async (req, res) => {
       const currentUser = req.query.email;
-      const quary = { userEMail: currentUser };
+      const quary = {    providerEmail: currentUser, };
 
       const result = await BookingCallaction.find(quary).toArray();
 
@@ -61,7 +96,8 @@ async function connectToMongoDB() {
     app.get("/service_to_do", async (req, res) => {
       const currentUser = req.query.email;
       const quary = {
-        providerEmail: currentUser,
+     
+        userEMail: currentUser
       };
 
       const result = await BookingCallaction.find(quary).toArray();
@@ -73,8 +109,8 @@ async function connectToMongoDB() {
     app.put("/update_status/:id", async (req, res) => {
       const id = req.params.id;
       const status = req.body;
-      // {status:'panding'}
-      console.log(id, status);
+     
+    
       const quary = { _id: new ObjectId(id) };
       const updateUser = {
         $set:status
