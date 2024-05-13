@@ -39,7 +39,7 @@ const verifayToken=(req,res,next)=>{
 const cokieOption ={
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict"
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
 }
 const uri = `mongodb+srv://${process.env.MB_USER}:${process.env.MB_PASS}@moto-race.y7jbbdm.mongodb.net/?retryWrites=true&w=majority&appName=Moto-Race`;
 
@@ -70,6 +70,11 @@ async function connectToMongoDB() {
       .clearCookie("token", { ...cokieOption, maxAge: 0 })
       .send({ success: true });
     })
+    // pagination data fatch 
+    app.get('/page_count',async(req,res)=>{
+      const count=await ServiceCallaction.estimatedDocumentCount()
+      res.send({count})
+    })
 
     app.delete("/booking/:id", async (req, res) => {
       const id = req.params.id;
@@ -81,9 +86,7 @@ async function connectToMongoDB() {
 
     app.get("/booking", async (req, res) => {
      
-      if(req.user.email !== req.query.email){
-        return res.status(403).send({message:'forviden access'})
-      }
+     
     
       const userEmail = req.query.email;
       const quary = { providerEmail: userEmail };
@@ -92,17 +95,8 @@ async function connectToMongoDB() {
 
       res.send(result);
     });
-    app.get("/booked",verifayToken, async (req, res) => {
-      let quari={}
-      console.log('owanar',req.user)
-    
-      if(req.user.email !== req.query.email){
-        return res.status(403).send({message:'forviden access'})
-      }
-     if(req.query?.email){
-      quari={email:req.query?.email
-      }
-     }
+    app.get("/booked", async (req, res) => {
+  
       const currentUser = req.query.email;
       const quary = {    providerEmail: currentUser, };
 
@@ -111,12 +105,10 @@ async function connectToMongoDB() {
       res.send(result);
     });
     // to do service
-    app.get("/service_to_do",verifayToken, async (req, res) => {
+    app.get("/service_to_do", async (req, res) => {
     
      
-      if(req.user.email !== req.query.email){
-        return res.status(403).send({message:'forviden access'})
-      }
+     
     
       const currentUser = req.query.email;
      
@@ -154,7 +146,7 @@ async function connectToMongoDB() {
       res.send(result);
     });
 
-    app.post("/booking",verifayToken, async (req, res) => {
+    app.post("/booking", async (req, res) => {
    
       const bokingData = req.body;
       const result = await BookingCallaction.insertOne(bokingData);
