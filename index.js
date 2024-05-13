@@ -8,31 +8,39 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
 const app = express();
 app.use(express.json());
+app.use(cookieParser())
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://cardoctor-bd.web.app",
-      "https://cardoctor-bd.firebaseapp.com",
+      "https://eleven-daeee.web.app",
+      "https://eleven-daeee.firebaseapp.com",
     ],
     credentials: true,
   })
 );
 // midleware create 
-   const verifayToken=(req,res,next)=>{
-    const token=req?.cookie?.token 
-    if(!token){
-      return res.status(401).send({message:'unathorise'})
+const verifayToken=(req,res,next)=>{
+  const token=req?.cookies?.token
+ 
+  if(!token){
+    return res.status(401).send({message:'unathorise'})
+  }
+  jwt.verify(token,process.env.TOKEN_KEY,(error,decoded)=>{
+    if(error){
+      return res.status(401).send({message:'sorry mama lav nai'})
     }
-    jwt.verify(token.process.env.TOKEN_KEY,(error,decoded)=>{
-      if(error){
-        return res.status(401).send({message:'can not accecss'})
-      }
-      req.user=decoded
-      next()
-    }
-    )
-   }
+    req.user=decoded
+  
+    next()
+  })
+
+}
+const cokieOption ={
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict"
+}
 const uri = `mongodb+srv://${process.env.MB_USER}:${process.env.MB_PASS}@moto-race.y7jbbdm.mongodb.net/?retryWrites=true&w=majority&appName=Moto-Race`;
 
 const client = new MongoClient(uri, {
@@ -54,18 +62,13 @@ async function connectToMongoDB() {
       const user=req.body
       const token=jwt.sign(user,process.env.TOKEN_KEY,{expiresIn:'24h'})
       res
-      .cookie('token',token,{
-        httpOnly:true,
-        secure:true,
-        sameSite:'none'
-      })
-      .send({success:true})
+      .cookie('token',token,cokieOption).send({success:true})
     })
     app.post('/tokenout',async (req,res)=>{
       const user=req.body
       res
-      .clearCookie('token',{maxAge:0})
-      .send({success:true})
+      .clearCookie("token", { ...cokieOption, maxAge: 0 })
+      .send({ success: true });
     })
 
     app.delete("/booking/:id", async (req, res) => {
@@ -77,6 +80,11 @@ async function connectToMongoDB() {
     });
 
     app.get("/booking", async (req, res) => {
+     
+      if(req.user.email !== req.query.email){
+        return res.status(403).send({message:'forviden access'})
+      }
+    
       const userEmail = req.query.email;
       const quary = { providerEmail: userEmail };
 
@@ -84,7 +92,17 @@ async function connectToMongoDB() {
 
       res.send(result);
     });
-    app.get("/booked", async (req, res) => {
+    app.get("/booked",verifayToken, async (req, res) => {
+      let quari={}
+      console.log('owanar',req.user)
+    
+      if(req.user.email !== req.query.email){
+        return res.status(403).send({message:'forviden access'})
+      }
+     if(req.query?.email){
+      quari={email:req.query?.email
+      }
+     }
       const currentUser = req.query.email;
       const quary = {    providerEmail: currentUser, };
 
@@ -93,8 +111,15 @@ async function connectToMongoDB() {
       res.send(result);
     });
     // to do service
-    app.get("/service_to_do", async (req, res) => {
+    app.get("/service_to_do",verifayToken, async (req, res) => {
+    
+     
+      if(req.user.email !== req.query.email){
+        return res.status(403).send({message:'forviden access'})
+      }
+    
       const currentUser = req.query.email;
+     
       const quary = {
      
         userEMail: currentUser
@@ -129,7 +154,8 @@ async function connectToMongoDB() {
       res.send(result);
     });
 
-    app.post("/booking", async (req, res) => {
+    app.post("/booking",verifayToken, async (req, res) => {
+   
       const bokingData = req.body;
       const result = await BookingCallaction.insertOne(bokingData);
       res.send(result);
